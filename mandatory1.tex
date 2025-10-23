@@ -1,0 +1,162 @@
+\documentclass[a4paper, twocolumn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[danish]{babel}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{./refs.bib}
+
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{booktabs}
+
+\definecolor{lightgray}{gray}{0.9}
+
+\lstset{
+    showstringspaces=false,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color[gray]{0.6},
+    stringstyle=\color[RGB]{255, 150, 75}
+}
+
+\author{Henrik Strøm}
+\title{Forudsigelse af Brændstofeffektivitet i Biler:\\En Maskinlæringstilgang}
+
+\begin{document}
+
+\twocolumn[
+    \begin{@twocolumnfalse}
+        \maketitle
+        \begin{abstract}
+            Dette papir undersøger forudsigelse af brændstofeffektivitet i biler ved hjælp af både regressions- og klassifikationstilgange. Vi analyserer et datasæt med 398 biler med syv features (cylindre, displacement, hestekræfter, vægt, acceleration, modelår og origin) for at forudsige miles per gallon (MPG). Vores regressionsmodel opnår en R² på 0.847 og RMSE på 2.99 mpg på testdata, mens vores logistiske regressionsklassifikator opnår 87.3\% nøjagtighed i at forudsige om en bil er brændstofeffektiv. Analysen viser at vægt og displacement er de stærkeste negative prædiktorer for brændstofeffektivitet, mens modelår viser en positiv korrelation, hvilket indikerer forbedringer i bilteknologi over tid.
+        \end{abstract}
+    \end{@twocolumnfalse}
+    \vspace{1cm}
+]
+
+\section{Introduktion}
+\label{sec:intro}
+
+Brændstofeffektivitet er blevet stadig vigtigere på grund af miljømæssige bekymringer og stigende brændstofpriser. At forstå hvilke køretøjskarakteristika der stærkest påvirker brændstofforbrug kan informere både forbrugeres købsbeslutninger og prioriteter i bildesign.
+
+Det automotive datasæt brugt i denne undersøgelse indeholder specifikationer for 398 køretøjer fra 1970'erne og begyndelsen af 1980'erne. Disse historiske data giver indsigt i forholdet mellem køretøjskarakteristika og brændstofeffektivitet i en periode med betydelig automotive udvikling.
+
+Maskinlæringsteknikker tilbyder kraftfulde værktøjer til at analysere disse forhold. Dette papir anvender både regressions- og klassifikationstilgange til problemet, hvilket giver komplementære perspektiver på forudsigelse af brændstofeffektivitet.
+
+\section{Forskningsspørgsmål}
+\label{sec:research}
+
+Denne undersøgelse adresserer to primære forskningsspørgsmål:
+
+\textbf{Q1:} Kan vi nøjagtigt forudsige et køretøjs brændstofeffektivitet (MPG) baseret på dets tekniske specifikationer?
+
+\textbf{Q2:} Kan vi pålideligt klassificere køretøjer som brændstofeffektive eller ej baseret på de samme karakteristika?
+
+Disse spørgsmål er komplementære: Q1 giver præcise numeriske forudsigelser, mens Q2 tilbyder en simplere binær klassifikation der kan være mere praktisk i beslutningskontekster.
+
+\section{Metoder}
+\label{sec:methods}
+
+\subsection{Datasæt}
+Datasættet indeholder 398 biler med otte features: MPG (målvariabel), cylindre, displacement, hestekræfter, vægt, acceleration, modelår, origin og bilnavn. Seks observationer med manglende hestekræfter blev fjernet, hvilket resulterer i 392 komplette observationer.
+
+\subsection{Regressionsproblem}
+For regressionsopgaven forudsiger vi kontinuerte MPG-værdier. Datasættet blev opdelt i træning (70\%), validering (15\%) og test (15\%). Vi sammenlignede tre modeller: standard Lineær Regression, Ridge Regression med varierende alpha-værdier (0.1, 1.0, 10) og Lasso Regression (alpha=0.1).
+
+Modelvalg var baseret på valideringssættets præstation ved brug af to metrikker: R² (determinationskoefficienten) og RMSE (Root Mean Squared Error). R² indikerer andelen af varians forklaret af modellen, mens RMSE giver den gennemsnitlige forudsigelsefejl i de oprindelige enheder (mpg).
+
+\subsection{Klassifikationsproblem}
+For klassifikation skabte vi en binær målvariabel ved at bruge median MPG (22.8) som tærskel: køretøjer over denne værdi klassificeres som "brændstofeffektive" (klasse 1), andre som "ikke brændstofeffektive" (klasse 0). Dette skaber et balanceret datasæt med 196 instanser i hver klasse.
+
+Data blev opdelt 80\% træning og 20\% test. Vi anvendte StandardScaler til at normalisere features, da logistisk regression er følsom over for feature-skalaer. Hyperparameter-tuning blev udført ved hjælp af GridSearchCV med 5-fold cross-validation, hvor vi testede regulariseringsparameteren C = [0.01, 0.1, 1, 10, 100].
+
+Modelpræstation blev evalueret ved brug af accuracy, precision, recall og F1-score. Derudover undersøgte vi ROC-kurven og AUC (Area Under Curve) for at vurdere modellens evne til at diskriminere mellem klasser på tværs af forskellige klassifikationstærskler.
+
+\section{Analyse}
+\label{sec:analysis}
+
+\subsection{Regressionsanalyse}
+Tabel \ref{tab:regression} viser valideringspræstation for alle testede modeller. Lasso Regression (alpha=0.1) opnåede den bedste præstation med R²=0.802 og RMSE=3.43 mpg.
+
+\begin{table}[h]
+\centering
+\caption{Sammenligning af regressionsmodeller på valideringssæt}
+\label{tab:regression}
+\begin{tabular}{lcc}
+\toprule
+Model & R² & RMSE \\
+\midrule
+Lineær Regression & 0.790 & 3.53 \\
+Ridge (α=0.1) & 0.790 & 3.53 \\
+Ridge (α=1.0) & 0.792 & 3.52 \\
+Ridge (α=10) & 0.798 & 3.46 \\
+Lasso (α=0.1) & \textbf{0.802} & \textbf{3.43} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Den valgte Lasso-model blev gendannet på de kombinerede trænings- og valideringsdata og derefter evalueret på det tilbageholdte testsæt. Endelig testpræstation: R²=0.847, RMSE=2.99 mpg, MAE=2.30 mpg.
+
+Figur \ref{fig:regression} viser forudsagte versus faktiske MPG-værdier. Det stærke lineære forhold indikerer god modelpræstation, selvom der er nogen spredning særligt ved højere MPG-værdier.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.48\textwidth]{figures/regression-results.png}
+    \caption{Faktiske vs. forudsagte MPG på testsæt. Punkter tæt på den diagonale linje indikerer nøjagtige forudsigelser.}
+    \label{fig:regression}
+\end{figure}
+
+\subsection{Klassifikationsanalyse}
+GridSearchCV identificerede C=0.01 som optimal og opnåede 91.71\% cross-validation accuracy. På testsættet opnåede modellen 87.3\% accuracy med fremragende recall (97.3\%), men lavere precision (80.0\%).
+
+Confusion matrix (Figur \ref{fig:confusion}) viser 36 true positives, 33 true negatives, 9 false positives og kun 1 false negative. Dette indikerer at modellen er konservativ og lejlighedsvis klassificerer ikke-effektive biler som effektive, men sjældent overser virkelig effektive køretøjer.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/confusion-matrix.png}
+    \caption{Confusion matrix der viser klassifikationsresultater}
+    \label{fig:confusion}
+\end{figure}
+
+ROC-kurve analysen gav en AUC på 0.955, hvilket indikerer fremragende diskriminerende evne på tværs af forskellige klassifikationstærskler.
+
+\section{Fund}
+\label{sec:findings}
+
+\subsection{Regressionsfund}
+Lasso-regressionsmodellen forudsiger succesfuldt brændstofeffektivitet med en gennemsnitlig fejl på 2.99 mpg (RMSE) på usete testdata og forklarer 84.7\% af variansen i MPG (R²=0.847). Feature importance-analyse afslører:
+
+\begin{itemize}
+\item \textbf{Negative prædiktorer:} Vægt (-0.358), cylindre (-0.333) og displacement (-0.320) reducerer brændstofeffektivitet mest
+\item \textbf{Positive prædiktorer:} Modelår (+0.273) og origin (+0.219) forbedrer effektivitet
+\item \textbf{Blandede effekter:} Hestekræfter viser negativ påvirkning (-0.266) mens acceleration har svag positiv effekt (+0.075)
+\end{itemize}
+
+Modellen generaliserer godt til nye data, med træningsnøjagtighed (91.7\%) tæt på testnøjagtighed (87.3\%), hvilket indikerer ingen overfitting.
+
+\subsection{Klassifikationsfund}
+Den logistiske regressionsklassifikator opnår 87.3\% accuracy i at skelne brændstofeffektive fra ikke-effektive køretøjer. Nøglemetrikker:
+
+\begin{itemize}
+\item Høj recall (97.3\%): Identificerer succesfuldt 97.3\% af virkelig effektive biler
+\item God precision (80.0\%): Når den forudsiger "effektiv", korrekt 80\% af tiden
+\item Fremragende AUC (0.955): Stærk diskriminerende evne
+\end{itemize}
+
+Modellen viser minimal overfitting, med trænings- (91.7\%) og test-accuracy (87.3\%) inden for acceptabel rækkevidde. Den enkelte false negative og ni false positives antyder en lidt konservativ klassifikator der foretrækker false positives frem for at overse effektive køretøjer.
+
+\section{Konklusion}
+\label{sec:conclusion}
+
+Denne undersøgelse adresserer succesfuldt begge forskningsspørgsmål ved brug af det automotive datasæt.
+
+\textbf{Q1 (Regression):} Ja, vi kan nøjagtigt forudsige køretøjs MPG med R²=0.847 og RMSE=2.99 mpg. Lasso-modellen med L1-regularisering (α=0.1) ydede bedre end både standard lineær regression og Ridge-alternativer. Køretøjsvægt fremstår som den stærkeste prediktor, hvor tungere biler konsekvent viser lavere brændstofeffektivitet.
+
+\textbf{Q2 (Klassifikation):} Ja, vi kan pålideligt klassificere køretøjer som brændstofeffektive eller ej med 87.3\% accuracy og fremragende AUC (0.955). Den logistiske regressionsmodel med minimal regularisering (C=0.01) giver robuste binære forudsigelser velegnede til praktisk beslutningstagning.
+
+De komplementære tilgange afslører konsistente mønstre: vægt, cylindre og displacement påvirker effektivitet negativt, mens nyere modelår viser forbedringer. Den stærke præstation af begge modeller validerer maskinlæringens anvendelighed til analyse af brændstofeffektivitet i biler.
+
+Fremtidigt arbejde kunne udforske ikke-lineære relationer ved brug af polynomielle features eller træ-baserede metoder og udvide analysen til moderne køretøjsdata for at vurdere om historiske relationer forbliver gyldige med nuværende bilteknologi.
+
+\end{document}
