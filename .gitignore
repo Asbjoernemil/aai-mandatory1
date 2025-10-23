@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# OS/editor
+.DS_Store
+
+# Data & outputs
+data/*
+!data/README.md
+reports/figures/*
+!reports/figures/.gitkeep
+
+# Jupyter runtime
+*.log
